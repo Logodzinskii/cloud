@@ -73,7 +73,7 @@ set_error_handler("myErrorHandler");
         ],
         '/file/'=>[
             'GET'=>'File::listFile',
-            'PUT'=>'Admin::updateUserByAdmin',
+            'POST'=>'File::addFile',
             'DELETE'=>'Admin::delUserByAdmin',
         ],
 
@@ -86,12 +86,24 @@ set_error_handler("myErrorHandler");
 
        $uri = substr($uri, 0, strpos($uri, '?'));//очистим uri от гет запроса
 
+    }elseif (strpos($uri, 'file') > 0)
+    {
+       $pathOld = $uri;
+       $uri = substr($uri, 0, 6);//очистим uri от пути к папкам и файлам пользователя
+
+    }else{
+
     }
 
     $classMethod = $urlList[$uri][$method]; //получим из массива $urlList имя метода для class
     $className = substr($classMethod, 0, strpos($classMethod,':'));
     $met = substr($classMethod, strpos($classMethod,'::')+2);
     session_start();
+
+    $database = new Database();
+    $db = $database->getConn();
+    $controller = new $className($db);
+
     if($className === 'Admin' && ($_SESSION['role'] === 'admin'))
     {
         loaderEntities($className);//подключим контроллер
@@ -102,19 +114,26 @@ set_error_handler("myErrorHandler");
         loaderEntities($className);//подключим контроллер
         echo 'users';
 
-    }elseif($className === 'File'){
+    }elseif($className === 'File' && $method === 'GET'){
 
         loaderEntities($className);//подключим контроллер
-        echo 'file';
+        $path = substr($pathOld,5);
+
+        print_r(json_decode(json_encode($controller->$met($path)),true));
+        return false;
+
+    }elseif($className === 'File' && $method === 'POST'){
+
+        loaderEntities($className);//подключим контроллер
+        $path = substr($pathOld,5);
+
+        print_r(json_decode(json_encode($controller->$met($path, $_FILES)),true));
+        return false;
 
     }else{
         http_response_code('500');
         return false;
     }
-
-    $database = new Database();
-    $db = $database->getConn();
-    $controller = new $className($db);
 
     switch ($method)
     {
@@ -145,9 +164,15 @@ set_error_handler("myErrorHandler");
 
                 print_r(json_decode(json_encode($controller->$met($_POST['email'], $_POST['password'], $_POST['status'], $_POST['age'], $_POST['first_name']),true)));
 
+             }elseif(isset($_POST['filename']))
+             {
+                 //проверить это form-data?
+
+                 print_r(json_decode(json_encode($controller->$met($_POST['filename']))));
+
              }else{
 
-                return null;
+                return false;
 
              }
              break;

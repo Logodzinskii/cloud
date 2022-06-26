@@ -77,6 +77,8 @@ class User extends exception
 
         if($check === 5)
         {
+            $salt = rand(0,888);
+            $initial_path = md5($email.$salt);
             $param = [
                 'user_email'=>$email,
             ];
@@ -84,15 +86,27 @@ class User extends exception
             $stmt = $this->conn->prepare($query);
             $stmt->execute($param);
             if($stmt->rowCount() === 0){
-                $sth = $this->conn->prepare("INSERT INTO `users` SET `user_email` = :user_email, `user_password` = :user_password, `users_status` = :users_status, `age`= :age, `first_name`=:first_name");
+                $sth = $this->conn->prepare("INSERT INTO `users` SET `user_email` = :user_email, `user_password` = :user_password, `users_status` = :users_status, `age`= :age, `first_name`=:first_name, `initial_path`=:initial_path");
                 $sth->execute([
                     'user_email' => $email,
                     'user_password' => password_hash($password, PASSWORD_DEFAULT),
                     'users_status'=>$status,
                     'age'=>$age,
                     'first_name'=>$firstName,
+                    'initial_path'=>$initial_path,
 
                 ]);
+                try{
+                    if(!file_exists('C:/wamp64/www/cloud/UsersClouds/'.$initial_path)){
+
+                        mkdir('C:/wamp64/www/cloud/UsersClouds/'.$initial_path, 0777, true);
+
+                    }
+
+                }catch (\Exception $e){
+                    echo $e->getMessage();
+                    http_response_code('204');
+                }
                 http_response_code('201');
             }else{
                 http_response_code('401');
@@ -161,9 +175,10 @@ class User extends exception
                     if(password_verify($password, $row->user_password)){
 
                         setcookie("sessionId",  session_id(), time() + 60, '/');
-                        if($row->users_status === 'admin'){
-                            $_SESSION['role'] = $row->users_status;
-                        }
+
+                        $_SESSION['role'] = $row->users_status;
+                        $_SESSION['initialPath'] = $row->initial_path;
+
                         http_response_code('200');
 
                     }else{
@@ -185,6 +200,7 @@ class User extends exception
 
         setcookie("sessionId", '',time()-86400,'/');
         $_SESSION['role'] = '';
+        $_SESSION['initialPath'] = '';
     }
 
     public function resetPasswordUser($email):void
