@@ -94,7 +94,6 @@ set_error_handler("myErrorHandler");
     session_start();
     if($className === 'Admin' && ($_SESSION['role'] === 'admin'))
     {
-        //http_response_code('500');
         loaderEntities($className);//подключим контроллер
         echo 'admin';
 
@@ -112,9 +111,7 @@ set_error_handler("myErrorHandler");
         http_response_code('500');
         return false;
     }
-    //loaderEntities($className);//подключим контроллер
 
-    //echo $_COOKIE['sessionId'];
     $database = new Database();
     $db = $database->getConn();
     $controller = new $className($db);

@@ -3,8 +3,8 @@
 class Database
 {
 
-    private $host = 'localhost';
-    private $dbname = 'cloud';
+    private $host = 'localhost:3307';
+    private $dbname = 'cloudstudents';
     private $username = 'root';
     private $password = '';
     public $conn;
