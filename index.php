@@ -71,6 +71,11 @@ set_error_handler("myErrorHandler");
             'PUT'=>'Admin::updateUserByAdmin',
             'DELETE'=>'Admin::delUserByAdmin',
         ],
+        '/1/file/'=>[
+            'GET'=>'File::listFile',
+            'PUT'=>'Admin::updateUserByAdmin',
+            'DELETE'=>'Admin::delUserByAdmin',
+        ],
 
     ];
 
@@ -97,6 +102,11 @@ set_error_handler("myErrorHandler");
 
         loaderEntities($className);//подключим контроллер
         echo 'users';
+
+    }elseif($className === 'File'){
+
+        loaderEntities($className);//подключим контроллер
+        echo 'file';
 
     }else{
         http_response_code('500');

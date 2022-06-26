@@ -1,7 +1,7 @@
 <?php
 
 require_once 'vendor/autoload.php';
-require_once 'Config/cloud_config.php';
+
 
 function loaderEntities($className){
 
