@@ -71,7 +71,7 @@ set_error_handler("myErrorHandler");
             'PUT'=>'Admin::updateUserByAdmin',
             'DELETE'=>'Admin::delUserByAdmin',
         ],
-        '/1/file/'=>[
+        '/file/'=>[
             'GET'=>'File::listFile',
             'PUT'=>'Admin::updateUserByAdmin',
             'DELETE'=>'Admin::delUserByAdmin',
