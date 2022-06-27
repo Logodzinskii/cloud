@@ -75,6 +75,7 @@ set_error_handler("myErrorHandler");
             'GET'=>'File::listFile',
             'POST'=>'File::addFile',
             'DELETE'=>'File::fileDelete',
+            'PUT'=>'File::fileRename',
         ],
 
     ];
@@ -140,7 +141,18 @@ set_error_handler("myErrorHandler");
         }else{
             http_response_code('404');
         }
+        return false;
 
+    }elseif($className === 'File' && $method === 'PUT'){
+
+        loaderEntities($className);//подключим контроллер
+        $path = substr($pathOld,5);
+        parse_str(file_get_contents('php://input'), $_PUT);
+        if (isset($_PUT['oldfilename']) && isset($_PUT['newfilename'])){
+            print_r(json_decode(json_encode($controller->$met($path,$_PUT['oldfilename'],$_PUT['newfilename'])),true));
+        }else{
+            http_response_code('404');
+        }
         return false;
 
     }else{

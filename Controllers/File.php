@@ -77,4 +77,17 @@ class File
         }
     }
 
+    public function fileRename($path, $oldFilename, $newFilename)
+    {
+        $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
+
+        if(opendir($fullLenPath) && is_file($fullLenPath . $oldFilename))
+        {
+            rename($fullLenPath . $oldFilename, $fullLenPath . $newFilename);
+            http_response_code('201');
+        }else{
+            http_response_code('404');
+        }
+    }
+
 }
