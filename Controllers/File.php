@@ -47,21 +47,34 @@ class File
 
     public function addFile($path, $filename)
     {
-        //проверить $filename на объем не более 2 гб и на то что это файл, а не код
         $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
         $uploadFile =  $fullLenPath . basename($filename['filename']['name']);
+        //проверить $filename на объем не более 2 гб
+        if ($filename['filename']['size'] <= 2147483648){
+            if (move_uploaded_file($filename['filename']['tmp_name'], $uploadFile)) {
 
+                http_response_code('201');
+            } else {
 
-        if (move_uploaded_file($filename['filename']['tmp_name'], $uploadFile)) {
-            echo "Файл корректен и был успешно загружен.\n";
-            http_response_code('201');
-        } else {
-            echo "Возможная атака с помощью файловой загрузки!\n";
-            http_response_code('204');
+                http_response_code('204');
+            }
+
+        }else{
+            http_response_code('400');
         }
 
-        echo 'Некоторая отладочная информация:';
-        //print_r($_FILES);
+    }
+
+    public function fileDelete($path,$filename)
+    {
+        $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
+        $deletedFile =  $fullLenPath.$filename;
+        if(file_exists($deletedFile) && unlink($deletedFile))
+        {
+            http_response_code('204');
+        }else{
+            http_response_code('400');
+        }
     }
 
 }

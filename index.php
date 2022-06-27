@@ -74,7 +74,7 @@ set_error_handler("myErrorHandler");
         '/file/'=>[
             'GET'=>'File::listFile',
             'POST'=>'File::addFile',
-            'DELETE'=>'Admin::delUserByAdmin',
+            'DELETE'=>'File::fileDelete',
         ],
 
     ];
@@ -128,6 +128,19 @@ set_error_handler("myErrorHandler");
         $path = substr($pathOld,5);
 
         print_r(json_decode(json_encode($controller->$met($path, $_FILES)),true));
+        return false;
+
+    }elseif($className === 'File' && $method === 'DELETE'){
+
+        loaderEntities($className);//подключим контроллер
+        $path = substr($pathOld,5);
+        parse_str(file_get_contents('php://input'), $_DELETE);
+        if (isset($_DELETE['filename'])){
+            print_r(json_decode(json_encode($controller->$met($path,$_DELETE['filename'])),true));
+        }else{
+            http_response_code('404');
+        }
+
         return false;
 
     }else{
