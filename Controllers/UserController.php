@@ -5,21 +5,27 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 
-class User extends exception
+class UserController extends exception
 {
-
-    // конструктор для соединения с базой данных
+    protected $connection;
+    /**
+     * @param $db
+     */
     public function __construct($db){
-        $this->conn = $db;
+        $this->connection = $db;
     }
 
+    /**
+     * @param int|null $id
+     * @return string
+     */
     public function listUsers(int $id=null):string //должен быть массив с пользователями
     {
 
         if(is_null($id)){
 
             $query = 'SELECT * FROM users';
-            $stmt = $this->conn->prepare($query);
+            $stmt = $this->connection->prepare($query);
             $stmt->execute();
             if($stmt->rowCount() > 0)
             {
@@ -44,7 +50,7 @@ class User extends exception
                 'id'=>$id,
             ];
             $query = 'SELECT * FROM users WHERE id=:id';
-            $stmt = $this->conn->prepare($query);
+            $stmt = $this->connection->prepare($query);
             $stmt->execute($param);
             if($stmt->rowCount() > 0)
             {
@@ -67,7 +73,14 @@ class User extends exception
 
     }
 
-    public function addUser($email, $password, $status, int $age, $firstName):void
+    /**
+     * @param string $email
+     * @param string $password
+     * @param string $status
+     * @param int $age
+     * @param string $firstName
+     */
+    public function addUser(string $email, string $password, string $status, int $age, string $firstName):void
     {
         $check = preg_match("/^(?:[a-z0-9]+(?:[-_.]?[a-z0-9]+)?@[a-z0-9_.-]+(?:\.?[a-z0-9]+)?\.[a-z]{2,5})$/i", $email);
         $check += (strlen($password) > 6) ? 1 : 0;
@@ -83,10 +96,10 @@ class User extends exception
                 'user_email'=>$email,
             ];
             $query = 'SELECT * FROM users WHERE user_email=:user_email';
-            $stmt = $this->conn->prepare($query);
+            $stmt = $this->connection->prepare($query);
             $stmt->execute($param);
             if($stmt->rowCount() === 0){
-                $sth = $this->conn->prepare("INSERT INTO `users` SET `user_email` = :user_email, `user_password` = :user_password, `users_status` = :users_status, `age`= :age, `first_name`=:first_name, `initial_path`=:initial_path");
+                $sth = $this->connection->prepare("INSERT INTO `users` SET `user_email` = :user_email, `user_password` = :user_password, `users_status` = :users_status, `age`= :age, `first_name`=:first_name, `initial_path`=:initial_path");
                 $sth->execute([
                     'user_email' => $email,
                     'user_password' => password_hash($password, PASSWORD_DEFAULT),
@@ -114,7 +127,13 @@ class User extends exception
         }
     }
 
-    public function updateUser(int $id, int $age, $firstName, $status):void
+    /**
+     * @param int $id
+     * @param int $age
+     * @param string $firstName
+     * @param string $status
+     */
+    public function updateUser(int $id, int $age, string $firstName, string $status):void
     {
         $query = "UPDATE users SET age = :age, first_name = :first_name, users_status = :users_status WHERE id = :id";
         $params = [
@@ -126,7 +145,7 @@ class User extends exception
 
         try {
 
-            $stmt = $this->conn->prepare($query);
+            $stmt = $this->connection->prepare($query);
             $stmt->execute($params);
 
         }catch (PDOException $e){
@@ -135,13 +154,16 @@ class User extends exception
         http_response_code('202');
     }
 
+    /**
+     * @param int $id
+     */
     public function deleteUser(int $id):void
     {
         $param = [
             'id'=>$id,
         ];
         $query = 'DELETE FROM users WHERE id=:id';
-        $stmt = $this->conn->prepare($query);
+        $stmt = $this->connection->prepare($query);
         $stmt->execute($param);
         if( ! $stmt->rowCount() ){
             http_response_code('401');
@@ -151,7 +173,11 @@ class User extends exception
 
     }
 
-    public function loginUser($email, $password):void
+    /**
+     * @param string $email
+     * @param string $password
+     */
+    public function loginUser(string $email, string $password):void
     {
 
         $check = preg_match("/^(?:[a-z0-9]+(?:[-_.]?[a-z0-9]+)?@[a-z0-9_.-]+(?:\.?[a-z0-9]+)?\.[a-z]{2,5})$/i", $email);
@@ -165,7 +191,7 @@ class User extends exception
             ];
 
             $query = 'SELECT * FROM users WHERE user_email=:user_email';
-            $stmt = $this->conn->prepare($query);
+            $stmt = $this->connection->prepare($query);
             $stmt->execute($param);
             if($stmt->rowCount() > 0)
             {
@@ -195,6 +221,9 @@ class User extends exception
 
     }
 
+    /**
+     ** удалим сессии при выходе пользователя
+     */
     public function logoutUser():void
     {
 
@@ -203,10 +232,12 @@ class User extends exception
         $_SESSION['initialPath'] = '';
     }
 
-    public function resetPasswordUser($email):void
+    /**
+     * @param string $email
+     * @throws Exception
+     */
+    public function resetPasswordUser(string $email):void
     {
-//Load Composer's autoloader
-        require 'vendor/autoload.php';
 
         $check = preg_match("/^(?:[a-z0-9]+(?:[-_.]?[a-z0-9]+)?@[a-z0-9_.-]+(?:\.?[a-z0-9]+)?\.[a-z]{2,5})$/i", $email);
 
@@ -216,36 +247,22 @@ class User extends exception
                 'user_email' => $email,
             ];
             $query = 'SELECT * FROM users WHERE user_email=:user_email';
-            $stmt = $this->conn->prepare($query);
+            $stmt = $this->connection->prepare($query);
             $stmt->execute($param);
             if ($stmt->rowCount() > 0) {
 
-                //Create an instance; passing `true` enables exceptions
-                $mail = new PHPMailer(true);
-
-                $mail->isSMTP();
-                $author = 'Администратор';
-                $text = 'Ссылка для восстановления пароля:';
-                //$mail->SMTPDebug = 1;
-                $mail->Host = 'ssl://smtp.mail.ru';
-                $mail->SMTPAuth = true;                                          //Send using SMTP
-                //Enable SMTP authentication
-                $mail->Username = 'chelae1@mail.ru';                     //SMTP username
-                $mail->Password = 'GspLPbApTXMBxqrQeybm';                    //SMTP password
-                $mail->SMTPSecure = 'SSL';
-                $mail->Port = '465';
-
-                $mail->CharSet = 'UTF-8';
-                $mail->From = 'chelae1@mail.ru';  // адрес почты, с которой идет отправка
-                $mail->FromName = 'Александр'; // имя отправителя
+                $mail = Configuration::get_instance();
+                $mail = $mail->getPHPMail();
                 $mail->addAddress($email, 'Александр');
 
                 $mail->isHTML(true);
-
+                $author = 'Администратор';
+                $text = 'Ссылка для восстановления пароля:';
                 $mail->Subject = $text;
                 $mail->Body = "Имя: {$author}<br> Email: {$email}<br> Сообщение: " . nl2br($text);
                 $mail->AltBody = "Имя: {$author}\r\n Email: {$email}\r\n Сообщение: {$text}";
                 $mail->send();
+
                 http_response_code('200');
             }else{
                 http_response_code('401');

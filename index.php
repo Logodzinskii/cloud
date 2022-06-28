@@ -4,7 +4,8 @@
     header("Content-Type: application/json; charset=UTF-8");
 
     require_once 'autoload.php';
-    include_once "Config/Database.php";
+
+
 
 function myErrorHandler($errno, $errstr, $errfile, $errline)
 {
@@ -52,30 +53,30 @@ set_error_handler("myErrorHandler");
 
     $urlList = [
         '/user/'=>[
-            'GET'=>'User::listUsers',
-            'POST'=>'User::addUser',
-            'PUT'=>'User::updateUser',
-            'DELETE'=>'User::deleteUser',
+            'GET'=>'UserController::listUsers',
+            'POST'=>'UserController::addUser',
+            'PUT'=>'UserController::updateUser',
+            'DELETE'=>'UserController::deleteUser',
         ],
         '/user/login/'=>[
-            'GET'=>'User::loginUser',
+            'GET'=>'UserController::loginUser',
         ],
         '/user/logout/'=>[
-            'GET'=>'User::logoutUser',
+            'GET'=>'UserController::logoutUser',
         ],
         '/user/reset_password/'=>[
-            'GET'=>'User::resetPasswordUser',
+            'GET'=>'UserController::resetPasswordUser',
         ],
         '/admin/user/'=>[
-            'GET'=>'Admin::showUsersByAdmin',
-            'PUT'=>'Admin::updateUserByAdmin',
-            'DELETE'=>'Admin::delUserByAdmin',
+            'GET'=>'AdminController::showUsersByAdmin',
+            'PUT'=>'AdminController::updateUserByAdmin',
+            'DELETE'=>'AdminController::delUserByAdmin',
         ],
         '/file/'=>[
-            'GET'=>'File::listFile',
-            'POST'=>'File::addFile',
-            'DELETE'=>'File::fileDelete',
-            'PUT'=>'File::fileRename',
+            'GET'=>'FileController::listFile',
+            'POST'=>'FileController::addFile',
+            'DELETE'=>'FileController::fileDelete',
+            'PUT'=>'FileController::fileRename',
         ],
 
     ];
@@ -101,39 +102,41 @@ set_error_handler("myErrorHandler");
     $met = substr($classMethod, strpos($classMethod,'::')+2);
     session_start();
 
-    $database = new Database();
-    $db = $database->getConn();
+    $database = Database::get_instance();
+
+    $db = $database->getConnection();
+
     $controller = new $className($db);
 
-    if($className === 'Admin' && ($_SESSION['role'] === 'admin'))
+    if($className === 'AdminController' && ($_SESSION['role'] === 'admin'))
     {
-        loaderEntities($className);//подключим контроллер
+        loaderEntities($className);
         echo 'admin';
 
-    }elseif($className === 'User'){
+    }elseif($className === 'UserController'){
 
-        loaderEntities($className);//подключим контроллер
+        loaderEntities($className);
         echo 'users';
 
-    }elseif($className === 'File' && $method === 'GET'){
+    }elseif($className === 'FileController' && $method === 'GET'){
 
-        loaderEntities($className);//подключим контроллер
+        loaderEntities($className);
         $path = substr($pathOld,5);
 
         print_r(json_decode(json_encode($controller->$met($path)),true));
         return false;
 
-    }elseif($className === 'File' && $method === 'POST'){
+    }elseif($className === 'FileController' && $method === 'POST'){
 
-        loaderEntities($className);//подключим контроллер
+        loaderEntities($className);
         $path = substr($pathOld,5);
 
         print_r(json_decode(json_encode($controller->$met($path, $_FILES)),true));
         return false;
 
-    }elseif($className === 'File' && $method === 'DELETE'){
+    }elseif($className === 'FileController' && $method === 'DELETE'){
 
-        loaderEntities($className);//подключим контроллер
+        loaderEntities($className);
         $path = substr($pathOld,5);
         parse_str(file_get_contents('php://input'), $_DELETE);
         if (isset($_DELETE['filename'])){
@@ -143,9 +146,9 @@ set_error_handler("myErrorHandler");
         }
         return false;
 
-    }elseif($className === 'File' && $method === 'PUT'){
+    }elseif($className === 'FileController' && $method === 'PUT'){
 
-        loaderEntities($className);//подключим контроллер
+        loaderEntities($className);
         $path = substr($pathOld,5);
         parse_str(file_get_contents('php://input'), $_PUT);
         if (isset($_PUT['oldfilename']) && isset($_PUT['newfilename'])){

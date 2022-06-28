@@ -1,19 +1,27 @@
 <?php
 
-class File
+class FileController
 {
+    /**
+     * @var
+     */
     protected $conn;
     protected $initialPath;
 
-    // конструктор для соединения с базой данных
-    public function __construct($db){
-
+    /**
+     * @param $db
+     */
+    public function __construct($db)
+    {
         $this->conn = $db;
         $this->initialPath = $_SESSION['initialPath'];
-
     }
 
-    public function listFile($path)
+    /**
+     * @param string $path
+     * @return string
+     */
+    public function listFile(string $path):string
     {
        $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
        $arrFile = [];
@@ -45,7 +53,11 @@ class File
        return json_encode($arrFile);
     }
 
-    public function addFile($path, $filename)
+    /**
+     * @param string $path
+     * @param string $filename
+     */
+    public function addFile(string $path, string $filename):void
     {
         $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
         $uploadFile =  $fullLenPath . basename($filename['filename']['name']);
@@ -65,7 +77,11 @@ class File
 
     }
 
-    public function fileDelete($path,$filename)
+    /**
+     * @param string $path
+     * @param string $filename
+     */
+    public function fileDelete(string $path, string $filename):void
     {
         $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
         $deletedFile =  $fullLenPath.$filename;
@@ -77,7 +93,13 @@ class File
         }
     }
 
-    public function fileRename($path, $oldFilename, $newFilename)
+    /**
+     * @param string $path
+     * @param string $oldFilename
+     * @param string $newFilename
+     */
+
+    public function fileRename(string $path, string $oldFilename, string $newFilename)
     {
         $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
 
@@ -89,5 +111,4 @@ class File
             http_response_code('404');
         }
     }
-
 }

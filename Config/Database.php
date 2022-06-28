@@ -7,19 +7,36 @@ class Database
     private $dbname = 'cloudstudents';
     private $username = 'root';
     private $password = '';
-    public $conn;
+    public  $connection;
+
+    static private $_ins = NULL;
+
+    static public function get_instance()
+    {
+        if(self::$_ins instanceof self)
+        {
+            return self::$_ins;
+        }
+        return self::$_ins = new self;
+    }
+
+    public function __construct()
+    {
+        $this->connection = new PDO('mysql:host=' . $this->host . ';dbname=' . $this->dbname . '', $this->username, $this->password);
+        $this->connection->exec("set names utf8");
+    }
+
+    private function __clone()
+    {
+
+    }
 
     /**
      * @return mixed
      */
-    public function getConn()
+    public function getConnection()
     {
-        try {
-            $this->conn = new PDO('mysql:host=' . $this->host . ';dbname=' . $this->dbname . '', $this->username, $this->password);
-            $this->conn->exec("set names utf8");
-        } catch (PDOException $e) {
-            trigger_error("Conn error: " . $e->getMessage(), E_USER_WARNING);
-        }
-        return $this->conn;
+        return $this->connection;
     }
+
 }

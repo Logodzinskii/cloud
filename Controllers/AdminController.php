@@ -1,15 +1,23 @@
 <?php
 
-class Admin extends User
+class AdminController extends UserController
 {
-
+    /**
+     * @var
+     */
     private $role;
 
-    // конструктор для соединения с базой данных
+    /**
+     * @param $db
+     */
     public function __construct($db){
         $this->conn = $db;
     }
 
+    /**
+     * @param int|null $id
+     * @return string
+     */
     public function showUsersByAdmin(int $id=null):string
     {
         if(is_null($id)){
@@ -56,6 +64,9 @@ class Admin extends User
         }
     }
 
+    /**
+     * @param int $id
+     */
     public function delUserByAdmin(int $id):void
     {
         $param = [
@@ -72,6 +83,12 @@ class Admin extends User
 
     }
 
+    /**
+     * @param int $id
+     * @param int $age
+     * @param $firstName
+     * @param $status
+     */
     public function updateUserByAdmin(int $id, int $age, $firstName, $status):void
     {
         $query = "UPDATE users SET age = :age, first_name = :first_name, users_status = :users_status WHERE id = :id";
