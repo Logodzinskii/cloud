@@ -110,9 +110,9 @@ class UserController extends exception
 
                 ]);
                 try{
-                    if(!file_exists('C:/wamp64/www/cloud/UsersClouds/'.$initial_path)){
+                    if(!file_exists($_SERVER['DOCUMENT_ROOT'].'/UsersClouds/'.$initial_path)){
 
-                        mkdir('C:/wamp64/www/cloud/UsersClouds/'.$initial_path, 0777, true);
+                        mkdir($_SERVER['DOCUMENT_ROOT'].'/UsersClouds/'.$initial_path, 0777, true);
 
                     }
 

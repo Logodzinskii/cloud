@@ -78,6 +78,12 @@ set_error_handler("myErrorHandler");
             'DELETE'=>'FileController::fileDelete',
             'PUT'=>'FileController::fileRename',
         ],
+        '/directory/'=>[
+            'GET'=>'DirectoryController::getInformationDirectory',
+            'POST'=>'DirectoryController::addDirectory',
+            'DELETE'=>'DirectoryController::deleteDirectory',
+            'PUT'=>'DirectoryController::renameDirectory',
+        ],
 
     ];
 
@@ -153,6 +159,50 @@ set_error_handler("myErrorHandler");
         parse_str(file_get_contents('php://input'), $_PUT);
         if (isset($_PUT['oldfilename']) && isset($_PUT['newfilename'])){
             print_r(json_decode(json_encode($controller->$met($path,$_PUT['oldfilename'],$_PUT['newfilename'])),true));
+        }else{
+            http_response_code('404');
+        }
+        return false;
+
+    }elseif($className === 'DirectoryController' && $method === 'POST'){
+
+        loaderEntities($className);
+        $path = $_POST['directoryname'];
+
+        print_r(json_decode(json_encode($controller->$met($path)),true));
+        return false;
+
+    }elseif($className === 'DirectoryController' && $method === 'DELETE'){
+
+        loaderEntities($className);
+
+        parse_str(file_get_contents('php://input'), $_DELETE);
+
+        if (isset($_DELETE['DirectoryName'])){
+            print_r(json_decode(json_encode($controller->$met($_DELETE['DirectoryName'])),true));
+        }else{
+            http_response_code('404');
+        }
+        return false;
+
+    }elseif($className === 'DirectoryController' && $method === 'GET'){
+
+        loaderEntities($className);
+
+        if (isset($_GET['DirectoryName'])){
+            print_r(json_decode(json_encode($controller->$met($_GET['DirectoryName'])),true));
+        }else{
+            http_response_code('404');
+        }
+        return false;
+
+    }elseif($className === 'DirectoryController' && $method === 'PUT'){
+
+        loaderEntities($className);
+
+        parse_str(file_get_contents('php://input'), $_PUT);
+        if (isset($_PUT['oldDirName']) && isset($_PUT['newDirName'])){
+            print_r(json_decode(json_encode($controller->$met($_PUT['oldDirName'],$_PUT['newDirName'])),true));
         }else{
             http_response_code('404');
         }

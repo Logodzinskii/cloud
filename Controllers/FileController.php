@@ -23,7 +23,7 @@ class FileController
      */
     public function listFile(string $path):string
     {
-       $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
+       $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . $path;
        $arrFile = [];
        if(is_dir($fullLenPath)){
 
@@ -55,24 +55,28 @@ class FileController
 
     /**
      * @param string $path
-     * @param string $filename
+     * @param array $filename
      */
-    public function addFile(string $path, string $filename):void
+    public function addFile(string $path, array $filename):void
     {
-        $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
-        $uploadFile =  $fullLenPath . basename($filename['filename']['name']);
-        //проверить $filename на объем не более 2 гб
-        if ($filename['filename']['size'] <= 2147483648){
-            if (move_uploaded_file($filename['filename']['tmp_name'], $uploadFile)) {
+        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . $path;
+        if(is_dir($fullLenPath)){
+            $uploadFile =  $fullLenPath . basename($filename['filename']['name']);
+            //проверить $filename на объем не более 2 гб
+            if ($filename['filename']['size'] <= 2147483648){
+                if (move_uploaded_file($filename['filename']['tmp_name'], $uploadFile)) {
 
-                http_response_code('201');
-            } else {
+                    http_response_code('201');
+                } else {
 
-                http_response_code('204');
+                    http_response_code('204');
+                }
+
+            }else{
+                http_response_code('400');
             }
-
         }else{
-            http_response_code('400');
+            http_response_code('404');
         }
 
     }
@@ -83,7 +87,7 @@ class FileController
      */
     public function fileDelete(string $path, string $filename):void
     {
-        $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
+        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . $path;
         $deletedFile =  $fullLenPath.$filename;
         if(file_exists($deletedFile) && unlink($deletedFile))
         {
@@ -101,7 +105,7 @@ class FileController
 
     public function fileRename(string $path, string $oldFilename, string $newFilename)
     {
-        $fullLenPath = 'C:/wamp64/www/cloud/UsersClouds/' . $this->initialPath . $path;
+        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . $path;
 
         if(opendir($fullLenPath) && is_file($fullLenPath . $oldFilename))
         {
