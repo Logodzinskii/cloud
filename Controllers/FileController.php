@@ -18,11 +18,13 @@ class FileController
     }
 
     /**
-     * @param string $path
+
      * @return string
      */
-    public function listFile(string $path):string
+    public function listFile():string
     {
+       $path = GET['path'];
+
        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . $path;
        $arrFile = [];
        if(is_dir($fullLenPath)){
@@ -54,13 +56,13 @@ class FileController
     }
 
     /**
-     * @param string $path
-     * @param array $filename
+
      */
-    public function addFile(string $path, array $filename):void
+    public function addFile():void
     {
-        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . $path;
+        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . POST['path'];
         if(is_dir($fullLenPath)){
+            $filename = FILES;
             $uploadFile =  $fullLenPath . basename($filename['filename']['name']);
             //проверить $filename на объем не более 2 гб
             if ($filename['filename']['size'] <= 2147483648){
@@ -82,13 +84,12 @@ class FileController
     }
 
     /**
-     * @param string $path
-     * @param string $filename
+
      */
-    public function fileDelete(string $path, string $filename):void
+    public function fileDelete():void
     {
-        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . $path;
-        $deletedFile =  $fullLenPath.$filename;
+        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . DELETE['path'];
+        $deletedFile =  $fullLenPath.DELETE['filename'];
         if(file_exists($deletedFile) && unlink($deletedFile))
         {
             http_response_code('204');
@@ -98,18 +99,16 @@ class FileController
     }
 
     /**
-     * @param string $path
-     * @param string $oldFilename
-     * @param string $newFilename
+
      */
 
-    public function fileRename(string $path, string $oldFilename, string $newFilename)
+    public function fileRename()
     {
-        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . $path;
+        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . PUT['path'];
 
-        if(opendir($fullLenPath) && is_file($fullLenPath . $oldFilename))
+        if(opendir($fullLenPath) && is_file($fullLenPath . PUT['oldfilename']))
         {
-            rename($fullLenPath . $oldFilename, $fullLenPath . $newFilename);
+            rename($fullLenPath . PUT['oldfilename'], $fullLenPath . PUT['newfilename']);
             http_response_code('201');
         }else{
             http_response_code('404');

@@ -3,10 +3,6 @@
     header("Access-Control-Allow-Origin: *");
     header("Content-Type: application/json; charset=UTF-8");
 
-    require_once 'autoload.php';
-
-
-
 function myErrorHandler($errno, $errstr, $errfile, $errline)
 {
 
@@ -87,191 +83,68 @@ set_error_handler("myErrorHandler");
 
     ];
 
-    $method = $_SERVER['REQUEST_METHOD'];
-    $uri    = $_SERVER['REQUEST_URI'];
-
-    if(strpos($uri, '?') > 0){
-
-       $uri = substr($uri, 0, strpos($uri, '?'));//очистим uri от гет запроса
-
-    }elseif (strpos($uri, 'file') > 0)
+    function start_controller($urlList)
     {
-       $pathOld = $uri;
-       $uri = substr($uri, 0, 6);//очистим uri от пути к папкам и файлам пользователя
+        require_once 'autoload.php';
+        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); // /admin/user/
+        $method = parse_url($_SERVER['REQUEST_METHOD']); //GET
+        $id = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY); // id=6
+        $res = $urlList[$path];
+        /**
+         * $controller - string название Класса
+         */
+        $classNameAndMethod = preg_split('/::/', $res[$method["path"]]);
 
-    }else{
+        session_start();
 
+        $database = Database::get_instance();
+
+        $db = $database->getConnection();
+        /**
+         * Подключим необходимый класс в контроллере
+         */
+
+        loaderEntities($classNameAndMethod[0]);
+        $className = $classNameAndMethod[0];
+        $method = $classNameAndMethod[1];
+        /**
+         * Создадим экземпляр класса по названию, полученному из переменной $path
+         */
+
+        $controller = new $className($db);
+        /**
+         * Если существуют GET POST и тд
+         * занесем их данные в константы для дальнейшего использования в методах класса
+         */
+        if(count($_POST) !== 0){
+            define("POST", $_POST);
+            var_dump(POST);
+        }elseif (count($_GET) !== 0){
+            define("GET", $_GET);
+            print_r(GET);
+        }elseif(strlen(file_get_contents('php://input'))>0 && parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'PUT'){
+            parse_str(file_get_contents('php://input'), $_PUT);
+            define("PUT", $_PUT);
+            print_r(PUT);
+            var_dump(parse_url($_SERVER['REQUEST_METHOD'])['path']);
+        }elseif(strlen(file_get_contents('php://input'))>0 && parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'DELETE'){
+            parse_str(file_get_contents('php://input'), $_DELETE);
+            define("DELETE", $_DELETE);
+            print_r(DELETE);
+            var_dump(parse_url($_SERVER['REQUEST_METHOD'])['path']);
+        }else{
+            http_response_code('404');
+        }
+
+    if (count($_FILES) !== 0){
+    define("FILES", $_FILES);
+        print_r(FILES);
+    }
+        /**
+         * Вызовем метод для класса
+         */
+
+        print_r(json_decode(json_encode($controller->$method(),true)));
     }
 
-    $classMethod = $urlList[$uri][$method]; //получим из массива $urlList имя метода для class
-    $className = substr($classMethod, 0, strpos($classMethod,':'));
-    $met = substr($classMethod, strpos($classMethod,'::')+2);
-    session_start();
-
-    $database = Database::get_instance();
-
-    $db = $database->getConnection();
-
-    $controller = new $className($db);
-
-    if($className === 'AdminController' && ($_SESSION['role'] === 'admin'))
-    {
-        loaderEntities($className);
-        echo 'admin';
-
-    }elseif($className === 'UserController'){
-
-        loaderEntities($className);
-        echo 'users';
-
-    }elseif($className === 'FileController' && $method === 'GET'){
-
-        loaderEntities($className);
-        $path = substr($pathOld,5);
-
-        print_r(json_decode(json_encode($controller->$met($path)),true));
-        return false;
-
-    }elseif($className === 'FileController' && $method === 'POST'){
-
-        loaderEntities($className);
-        $path = substr($pathOld,5);
-
-        print_r(json_decode(json_encode($controller->$met($path, $_FILES)),true));
-        return false;
-
-    }elseif($className === 'FileController' && $method === 'DELETE'){
-
-        loaderEntities($className);
-        $path = substr($pathOld,5);
-        parse_str(file_get_contents('php://input'), $_DELETE);
-        if (isset($_DELETE['filename'])){
-            print_r(json_decode(json_encode($controller->$met($path,$_DELETE['filename'])),true));
-        }else{
-            http_response_code('404');
-        }
-        return false;
-
-    }elseif($className === 'FileController' && $method === 'PUT'){
-
-        loaderEntities($className);
-        $path = substr($pathOld,5);
-        parse_str(file_get_contents('php://input'), $_PUT);
-        if (isset($_PUT['oldfilename']) && isset($_PUT['newfilename'])){
-            print_r(json_decode(json_encode($controller->$met($path,$_PUT['oldfilename'],$_PUT['newfilename'])),true));
-        }else{
-            http_response_code('404');
-        }
-        return false;
-
-    }elseif($className === 'DirectoryController' && $method === 'POST'){
-
-        loaderEntities($className);
-        $path = $_POST['directoryname'];
-
-        print_r(json_decode(json_encode($controller->$met($path)),true));
-        return false;
-
-    }elseif($className === 'DirectoryController' && $method === 'DELETE'){
-
-        loaderEntities($className);
-
-        parse_str(file_get_contents('php://input'), $_DELETE);
-
-        if (isset($_DELETE['DirectoryName'])){
-            print_r(json_decode(json_encode($controller->$met($_DELETE['DirectoryName'])),true));
-        }else{
-            http_response_code('404');
-        }
-        return false;
-
-    }elseif($className === 'DirectoryController' && $method === 'GET'){
-
-        loaderEntities($className);
-
-        if (isset($_GET['DirectoryName'])){
-            print_r(json_decode(json_encode($controller->$met($_GET['DirectoryName'])),true));
-        }else{
-            http_response_code('404');
-        }
-        return false;
-
-    }elseif($className === 'DirectoryController' && $method === 'PUT'){
-
-        loaderEntities($className);
-
-        parse_str(file_get_contents('php://input'), $_PUT);
-        if (isset($_PUT['oldDirName']) && isset($_PUT['newDirName'])){
-            print_r(json_decode(json_encode($controller->$met($_PUT['oldDirName'],$_PUT['newDirName'])),true));
-        }else{
-            http_response_code('404');
-        }
-        return false;
-
-    }else{
-        http_response_code('500');
-        return false;
-    }
-
-    switch ($method)
-    {
-        case 'GET':
-
-            if(isset($_GET['id'])){
-
-                print_r(json_decode(json_encode($controller->$met($_GET['id'])),true));
-
-            }elseif(isset($_GET['email']) && isset($_GET['password'])){
-                //session_start();
-                print_r(json_decode(json_encode($controller->$met($_GET['email'], $_GET['password']),  true)));
-
-            }elseif(isset($_GET['email'])){
-
-                print_r(json_decode(json_encode($controller->$met($_GET['email'])),true));
-
-            }else{
-
-                print_r(json_decode(json_encode($controller->$met()),true));
-
-            }
-            break;
-        case 'POST':
-
-             $id = isset($_POST['id']) ? $_POST['id'] : null;
-             if(isset($_POST['email']) && isset($_POST['password']) && isset($_POST['age']) && isset($_POST['status']) && isset($_POST['first_name'])){
-
-                print_r(json_decode(json_encode($controller->$met($_POST['email'], $_POST['password'], $_POST['status'], $_POST['age'], $_POST['first_name']),true)));
-
-             }elseif(isset($_POST['filename']))
-             {
-                 //проверить это form-data?
-
-                 print_r(json_decode(json_encode($controller->$met($_POST['filename']))));
-
-             }else{
-
-                return false;
-
-             }
-             break;
-        case 'PUT':
-
-             parse_str(file_get_contents('php://input'), $_PUT);
-
-             $id = isset($_PUT['id']) ? $_PUT['id'] : null;
-
-             print_r(json_decode(json_encode($controller->$met($_PUT['id'], $_PUT['age'], $_PUT['first_name'], $_PUT['status']),true)));
-
-             break;
-        case 'DELETE':
-
-             parse_str(file_get_contents('php://input'), $_DELETE);
-
-             $id = isset($_DELETE['id']) ? $_DELETE['id'] : null;
-             print_r(json_decode(json_encode($controller->$met($_DELETE['id'])),true));
-             break;
-        }
-
-        header('Content-Type: application/json; charset=utf-8');
-
-        //return http_response_code('200');
+    start_controller($urlList);
