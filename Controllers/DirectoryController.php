@@ -14,62 +14,64 @@ class DirectoryController
     public function __construct($db)
     {
         $this->conn = $db;
-        $this->initialPath = $_SESSION['initialPath'];
+        if(strlen($_SESSION['initialPath']) > 0){
+            $this->initialPath = $_SESSION['initialPath'];
+        }else{
+            http_response_code('401');
+            die();
+        }
+
     }
 
     /**
-     * @param string $path
+     * POST['path'] не должен содержать символы \|/:?"<>
      * @return void
      */
-    public function addDirectory(string $path):void
+    public function addDirectory():void
     {
+
         $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath;
-        if (!is_dir($fullLenPath .'/'. $path))
-        {
-            if (!mkdir($fullLenPath.'/'. $path, 0777, true)) {
-                die('Не удалось создать директории...');
-            }else http_response_code('201');
+        if (!is_dir($fullLenPath .'/'. Validate::checkDirName(POST['path']))){
+            if (!mkdir($fullLenPath .'/'. Validate::checkDirName(POST['path']), 0777, true))
+            {
 
+                http_response_code('400');
+
+            }else{
+
+                http_response_code('201');
+
+            }
         }else{
-            http_response_code('404');
+            http_response_code('400');
         }
+
     }
 
     /**
-     * @param string $path
      * @return void
      */
-    public function deleteDirectory(string $path):void
+    public function deleteDirectory():void
     {
-        $src = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . '/' . $path;
-        if (file_exists($src)) {
-            $dir = opendir($src);
-            while (false !== ($file = readdir($dir))) {
-                if (($file != '.') && ($file != '..')) {
-                    $full = $src . '/' . $file;
-                    if (is_dir($full)) {
-                        rmdir($full);
 
-                    } else {
-                        unlink($full);
-                    }
-                }
-            }
-            closedir($dir);
-            rmdir($src);
-            http_response_code('204');
-        }else{
-            http_response_code('404');
-        }
+        $dir = Validate::isDirectory(Validate::checkDirName(DELETE['path']));
+
+        Validate::remove_dir($dir);
+        http_response_code('204');
+
     }
 
-    /**
-     * @param string $path
+     /**
      * @return string
      */
-    public function getInformationDirectory(string $path):string
+    public function getInformationDirectory():string
     {
-        $dir = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . '/' . $path;
+        if(defined('GET')){
+            $dir = Validate::isDirectory(Validate::checkDirName(GET['path']));
+        }else{
+            $dir = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath;
+        }
+
         $result = [];
         $cdir = scandir($dir);
         foreach ($cdir as $key => $value)
@@ -86,27 +88,34 @@ class DirectoryController
                 }
             }
         }
-        http_response_code(200);
-        return json_encode($result);
+
+       http_response_code('200');
+       return json_encode($result);
+
     }
 
     /**
-     * @param string $oldDirectoryName
-     * @param string $newDirectoryName
      * @return void
      */
-    public function renameDirectory(string $oldDirectoryName, string $newDirectoryName):void
+    public function renameDirectory():void
     {
-        $dir = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . '/' . $oldDirectoryName;
+        $oldDirectoryName = Validate::checkDirName(PUT['oldDirName']);
+        $newDirectoryName = Validate::checkDirName(PUT['newDirName']);
+
+        $dir = Validate::isDirectory($oldDirectoryName);
         $newDir = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . '/' . $newDirectoryName;
         if(is_dir($dir) && !is_dir($newDir))
         {
             if(rename($dir, $newDir))
             {
-                http_response_code(201);
+                http_response_code('201');
+
             }else{
-                http_response_code(404);
+
+                http_response_code('404');
+
             }
         }
     }
+
 }

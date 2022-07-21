@@ -63,6 +63,9 @@ set_error_handler("myErrorHandler");
         '/user/reset_password/'=>[
             'GET'=>'UserController::resetPasswordUser',
         ],
+        '/user/search/'=>[
+            'GET'=>'UserController::findUserByEmail',
+        ],
         '/admin/user/'=>[
             'GET'=>'AdminController::showUsersByAdmin',
             'PUT'=>'AdminController::updateUserByAdmin',
@@ -100,11 +103,13 @@ set_error_handler("myErrorHandler");
         $database = Database::get_instance();
 
         $db = $database->getConnection();
+
         /**
          * Подключим необходимый класс в контроллере
          */
 
         loaderEntities($classNameAndMethod[0]);
+
         $className = $classNameAndMethod[0];
         $method = $classNameAndMethod[1];
         /**
@@ -136,10 +141,10 @@ set_error_handler("myErrorHandler");
             http_response_code('404');
         }
 
-    if (count($_FILES) !== 0){
-    define("FILES", $_FILES);
-        print_r(FILES);
-    }
+        if (count($_FILES) !== 0){
+        define("FILES", $_FILES);
+            print_r(FILES);
+        }
         /**
          * Вызовем метод для класса
          */

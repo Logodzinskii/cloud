@@ -16,13 +16,12 @@ class UserController extends exception
     }
 
     /**
-
      * @return string
      */
     public function listUsers():string
     {
 
-        if(is_null(GET['id'])){
+        if(!defined('GET')){
 
             $query = 'SELECT * FROM users';
             $stmt = $this->connection->prepare($query);
@@ -38,6 +37,7 @@ class UserController extends exception
                         'users_status'=>$row->users_status,
                     ];
                 }
+                http_response_code('200');
             }else{
                 http_response_code('404');
                 return false;
@@ -64,6 +64,7 @@ class UserController extends exception
                         'users_status'=>$row->users_status,
                     ];
                 }
+                http_response_code('200');
             }else{
                 http_response_code('404');
                 return  false;
@@ -79,101 +80,84 @@ class UserController extends exception
     }
 
     /**
-
+    * @return void
      */
     public function addUser():void
     {
-
-        $check = preg_match("/^(?:[a-z0-9]+(?:[-_.]?[a-z0-9]+)?@[a-z0-9_.-]+(?:\.?[a-z0-9]+)?\.[a-z]{2,5})$/i", POST['email']);
-        $check += (strlen(POST['password']) > 6) ? 1 : 0;
-        $check += (intval(POST['age']) <= 99) ? 1 : 0;
-        $check += preg_match('/^[_0-9A-Za-zА-Яа-пр-яЁё]+$/', POST['first_name']);
-        $check += preg_match('/^[_0-9A-Za-zА-Яа-пр-яЁё]+$/', POST['status']);
-
-        if($check === 5)
-        {
-            $email = POST['email'];
-            $password = POST['password'];
-            $age= intval(POST['age']);
-            $firstName = POST['first_name'];
-            $status = POST['status'];
+        if(defined('POST')){
+            $email = Validate::validateEmail(POST['email']);
+            $password = Validate::validatePassword(POST['password']);
+            $age= Validate::validateAge(intval(POST['age']));
+            $firstName = Validate::validateText(POST['first_name']);
+            $status = Validate::validateText(POST['status']);
             $salt = rand(0,888);
-            $initial_path = md5(POST['email'].$salt);
+            $initial_path = md5($email.$salt);
             $param = [
                 'user_email'=>$email,
             ];
             $query = 'SELECT * FROM users WHERE user_email=:user_email';
             $stmt = $this->connection->prepare($query);
             $stmt->execute($param);
-            if($stmt->rowCount() === 0){
+            if($stmt->rowCount() === 0) {
                 $sth = $this->connection->prepare("INSERT INTO `users` SET `user_email` = :user_email, `user_password` = :user_password, `users_status` = :users_status, `age`= :age, `first_name`=:first_name, `initial_path`=:initial_path");
                 $sth->execute([
                     'user_email' => $email,
                     'user_password' => password_hash($password, PASSWORD_DEFAULT),
-                    'users_status'=>$status,
-                    'age'=>$age,
-                    'first_name'=>$firstName,
-                    'initial_path'=>$initial_path,
+                    'users_status' => $status,
+                    'age' => $age,
+                    'first_name' => $firstName,
+                    'initial_path' => $initial_path,
                 ]);
-                try{
-                    if(!file_exists($_SERVER['DOCUMENT_ROOT'].'/UsersClouds/'.$initial_path)){
+                try {
+                    if (!file_exists($_SERVER['DOCUMENT_ROOT'] . '/UsersClouds/' . $initial_path)) {
 
-                        mkdir($_SERVER['DOCUMENT_ROOT'].'/UsersClouds/'.$initial_path, 0777, true);
+                        mkdir($_SERVER['DOCUMENT_ROOT'] . '/UsersClouds/' . $initial_path, 0777, true);
 
                     }
 
-                }catch (\Exception $e){
+                } catch (\Exception $e) {
                     echo $e->getMessage();
                     http_response_code('204');
                 }
                 http_response_code('201');
             }else{
-                http_response_code('401');
+                http_response_code('400');
             }
         }
+
     }
 
     /**
-
+    * @return void
      */
     public function updateUser():void
     {
         if(defined('PUT')){
-            $check = preg_match('/^[0-9]*$/', PUT['id']);
-            $check += (intval(PUT['age']) <= 99) ? 1 : 0;
-            $check += preg_match('/^[_0-9A-Za-zА-Яа-пр-яЁё]+$/', PUT['first_name']);
-            $check += preg_match('/^[_0-9A-Za-zА-Яа-пр-яЁё]+$/', PUT['status']);
 
-            if($check === 4){
+            $id = Validate::validateId(PUT['id']);
+            $age = Validate::validateAge(PUT['age']);
+            $firstName = Validate::validateText(PUT['first_name']);
+            $status = Validate::validateText(PUT['status']);
 
-                $id = intval(PUT['id']);
-                $age = intval(PUT['age']);
-                $firstName = PUT['first_name'];
-                $status = PUT['status'];
+            $query = "UPDATE users SET age = :age, first_name = :first_name, users_status = :users_status WHERE id = :id";
+            $params = [
+                'id' => $id,
+                'age' => $age,
+                'first_name'=> $firstName,
+                'users_status'=>$status,
+            ];
 
-                $query = "UPDATE users SET age = :age, first_name = :first_name, users_status = :users_status WHERE id = :id";
-                $params = [
-                    'id' => $id,
-                    'age' => $age,
-                    'first_name'=> $firstName,
-                    'users_status'=>$status,
-                ];
+            try {
 
-                try {
+                $stmt = $this->connection->prepare($query);
+                $stmt->execute($params);
 
-                    $stmt = $this->connection->prepare($query);
-                    $stmt->execute($params);
-
-                }catch (PDOException $e){
-                    trigger_error($e->getMessage(), E_USER_WARNING);
-                }
-                http_response_code('202');
-            }else{
-                http_response_code('404');
+            }catch (PDOException $e){
+                trigger_error($e->getMessage(), E_USER_WARNING);
             }
-
+            http_response_code('202');
         }else{
-            http_response_code('400');
+            http_response_code('404');
         }
 
     }
@@ -183,16 +167,16 @@ class UserController extends exception
      */
     public function deleteUser():void
     {
-        if(preg_match('/^[0-9]*$/', DELETE['id']) === 1){
+        if(defined('DELETE')){
             $param = [
-                'id'=>intval(DELETE['id']),
+                'id'=>Validate::validateId(DELETE['id']),
             ];
             /**
              * Удаление папки с файлами пользователя
              */
             $query = 'SELECT initial_path FROM users WHERE id=:id';
 
-            $sth = $this->conn->prepare($query);
+            $sth = $this->connection->prepare($query);
             $sth->execute($param);
             $result = $sth->fetchAll(PDO::FETCH_ASSOC);
 
@@ -200,7 +184,7 @@ class UserController extends exception
             {
                 $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $result[0]['initial_path'];
 
-                $this->removeDirUser($fullLenPath);
+                Validate::remove_dir($fullLenPath);
                 /**
                  * Удаление пользователя из базы данных
                  */
@@ -223,18 +207,7 @@ class UserController extends exception
         }
 
     }
-    /**
-     * @param string $path
-     */
-    protected function removeDirUser($path)
-    {
-        if ($objs = glob($path . '/*')) {
-            foreach($objs as $obj) {
-                is_dir($obj) ? $this->removeDirUser($obj) : unlink($obj);
-            }
-        }
-        rmdir($path);
-    }
+
     /**
      *@return void
      */
@@ -242,14 +215,13 @@ class UserController extends exception
     public function loginUser():void
     {
 
-        $check = preg_match("/^(?:[a-z0-9]+(?:[-_.]?[a-z0-9]+)?@[a-z0-9_.-]+(?:\.?[a-z0-9]+)?\.[a-z]{2,5})$/i", GET['email']);
-        $check += (strlen(GET['password']) > 6) ? 1 : 0;
-
-        if($check === 2)
+        if(defined('GET'))
         {
+            $email = Validate::validateEmail(GET['email']);
+            $password = Validate::validatePassword(GET['password']);
 
             $param = [
-                'user_email'=>GET['email'],
+                'user_email'=>$email,
             ];
 
             $query = 'SELECT * FROM users WHERE user_email=:user_email';
@@ -260,7 +232,7 @@ class UserController extends exception
                 while ($row = $stmt->fetch(PDO::FETCH_LAZY))
                 {
 
-                    if(password_verify(GET['password'], $row->user_password)){
+                    if(password_verify($password, $row->user_password)){
 
                         setcookie("sessionId",  session_id(), time() + 60, '/');
 
@@ -301,10 +273,8 @@ class UserController extends exception
     public function resetPasswordUser():void
     {
 
-        $check = preg_match("/^(?:[a-z0-9]+(?:[-_.]?[a-z0-9]+)?@[a-z0-9_.-]+(?:\.?[a-z0-9]+)?\.[a-z]{2,5})$/i", GET['email']);
-
-        if($check === 1) {
-            $email = GET['email'];
+        if(defined('GET')) {
+            $email = Validate::validateEmail(GET['email']);
             $param = [
                 'user_email' => $email,
             ];
@@ -332,6 +302,29 @@ class UserController extends exception
             }
         }
 
+    }
+
+    public function findUserByEmail():string
+    {
+        if(defined('GET')) {
+            $email = Validate::validateEmail(GET['email']);
+            $param = [
+                'user_email' => $email,
+            ];
+            $query = 'SELECT * FROM users WHERE user_email=:user_email';
+            $stmt = $this->connection->prepare($query);
+            $stmt->execute($param);
+            if ($stmt->rowCount() > 0) {
+                while ($row = $stmt->fetch(PDO::FETCH_LAZY))
+                {
+                    $email = $row->user_email;
+                }
+            }
+            return $email;
+        }else{
+            http_response_code('404');
+            die();
+        }
     }
 
 }

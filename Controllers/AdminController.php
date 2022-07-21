@@ -11,7 +11,7 @@ class AdminController extends UserController
      * @param $db
      */
     public function __construct($db){
-        $this->conn = $db;
+        $this->connection = $db;
         if($_SESSION['role'] !== 'admin')
         {
             http_response_code('401');
@@ -26,19 +26,17 @@ class AdminController extends UserController
     public function showUsersByAdmin():string
     {
 
-        if(!defined('GET')){
+        if(!defined('GET')) {
 
             $query = 'SELECT * FROM users';
-            $stmt = $this->conn->prepare($query);
+            $stmt = $this->connection->prepare($query);
             $stmt->execute();
-
-        }elseif(preg_match('/^[0-9]*$/',GET['id']) === 1){
-
+        }elseif(defined('GET')){
             $param = [
-                'id'=>GET['id'],
+                'id'=>Validate::validateId(GET['id']),
             ];
             $query = 'SELECT * FROM users WHERE id=:id';
-            $stmt = $this->conn->prepare($query);
+            $stmt = $this->connection->prepare($query);
             $stmt->execute($param);
 
         }else{
@@ -56,6 +54,7 @@ class AdminController extends UserController
                     'users_status'=>$row->users_status,
                 ];
             }
+            http_response_code('200');
         }else{
             http_response_code('404');
             die();
@@ -64,28 +63,28 @@ class AdminController extends UserController
     }
 
     /**
-
+    * @return void
      */
     public function delUserByAdmin():void
     {
-        if(defined('DELETE') && preg_match('/^[0-9]*$/', DELETE['id']) === 1){
+        if(defined('DELETE')){
             $param = [
-                'id'=>DELETE['id'],
+                'id'=>Validate::validateId(DELETE['id']),
             ];
 
             $query = 'SELECT initial_path FROM users WHERE id=:id';
 
-            $sth = $this->conn->prepare($query);
+            $sth = $this->connection->prepare($query);
             $sth->execute($param);
             $result = $sth->fetchAll(PDO::FETCH_ASSOC);
             if(isset($result[0]['initial_path']))
             {
                 $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $result[0]['initial_path'];
 
-                $this->removeDirUser($fullLenPath);
+                Validate::remove_dir($fullLenPath);
 
                 $query = 'DELETE FROM users WHERE id=:id';
-                $stmt = $this->conn->prepare($query);
+                $stmt = $this->connection->prepare($query);
                 $stmt->execute($param);
                 if(!$stmt->rowCount()){
                     http_response_code('401');
@@ -104,61 +103,39 @@ class AdminController extends UserController
 
     }
 
-    /**
-     * @param string $path
-     */
-    protected function removeDirUser($path)
-    {
-        if ($objs = glob($path . '/*')) {
-            foreach($objs as $obj) {
-                is_dir($obj) ? $this->removeDirUser($obj) : unlink($obj);
-            }
-        }
-        rmdir($path);
-    }
-
      /**
      *@return void
      */
     public function updateUserByAdmin():void
     {
         if(defined('PUT')){
-            $check = preg_match('/^[0-9]*$/', PUT['id']);
-            $check += (intval(PUT['age']) <= 99) ? 1 : 0;
-            $check += preg_match('/^[_0-9A-Za-zА-Яа-пр-яЁё]+$/', PUT['first_name']);
-            $check += preg_match('/^[_0-9A-Za-zА-Яа-пр-яЁё]+$/', PUT['status']);
 
-            if($check === 4) {
+            $id = Validate::validateId(PUT['id']);
+            $age = Validate::validateAge(PUT['age']);
+            $firstName = Validate::validateText(PUT['first_name']);
+            $status = Validate::validateText(PUT['status']);
 
-                $id = intval(PUT['id']);
-                $age = intval(PUT['age']);
-                $firstName = PUT['first_name'];
-                $status = PUT['status'];
+            $query = "UPDATE users SET age = :age, first_name = :first_name, users_status = :users_status WHERE id = :id";
+            $params = [
+                'id' => $id,
+                'age' => $age,
+                'first_name' => $firstName,
+                'users_status' => $status,
+            ];
 
-                $query = "UPDATE users SET age = :age, first_name = :first_name, users_status = :users_status WHERE id = :id";
-                $params = [
-                    'id' => $id,
-                    'age' => $age,
-                    'first_name' => $firstName,
-                    'users_status' => $status,
-                ];
+            try {
 
-                try {
+                $stmt = $this->connection->prepare($query);
+                $stmt->execute($params);
 
-                    $stmt = $this->conn->prepare($query);
-                    $stmt->execute($params);
-
-                } catch (PDOException $e) {
-                    trigger_error($e->getMessage(), E_USER_WARNING);
-                }
-                http_response_code('202');
-            }else{
-                http_response_code('404');
+            } catch (PDOException $e) {
+                trigger_error($e->getMessage(), E_USER_WARNING);
             }
-        }else{
-            http_response_code('400');
-        }
+            http_response_code('202');
 
+        }else{
+            http_response_code('404');
+        }
     }
 
 }

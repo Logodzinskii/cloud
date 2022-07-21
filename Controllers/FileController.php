@@ -6,7 +6,7 @@ class FileController
      * @var
      */
     protected $conn;
-    protected $initialPath;
+
 
     /**
      * @param $db
@@ -14,37 +14,28 @@ class FileController
     public function __construct($db)
     {
         $this->conn = $db;
-        $this->initialPath = $_SESSION['initialPath'];
+        if(strlen($_SESSION['initialPath']) > 0){
+            $this->initialPath = $_SESSION['initialPath'];
+        }else{
+            http_response_code('401');
+            die();
+        }
+
     }
 
     /**
-
      * @return string
      */
     public function listFile():string
     {
-       $path = GET['path'];
+       $fullLenPath = Validate::isDirectory(GET['path']);
 
-       $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . $path;
        $arrFile = [];
-       if(is_dir($fullLenPath)){
-
-            $files = scandir($fullLenPath);
-
-       }elseif(is_file($fullLenPath)){
-
-           $info = pathinfo($path);
-           return json_encode($info);
-
-       }else{
-
-            http_response_code('404');
-            die('файл не найден');
-       }
 
        $files = scandir($fullLenPath);
 
-       foreach ($files as $file){
+       foreach ($files as $file)
+       {
            if (is_file($fullLenPath . $file))
            {
                $arrFile[]=$file;
@@ -53,65 +44,77 @@ class FileController
 
        http_response_code('200');
        return json_encode($arrFile);
+
     }
 
     /**
-
+    * @return void
      */
     public function addFile():void
     {
-        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . POST['path'];
-        if(is_dir($fullLenPath)){
-            $filename = FILES;
-            $uploadFile =  $fullLenPath . basename($filename['filename']['name']);
-            //проверить $filename на объем не более 2 гб
-            if ($filename['filename']['size'] <= 2147483648){
-                if (move_uploaded_file($filename['filename']['tmp_name'], $uploadFile)) {
+        $fullLenPath = Validate::isDirectory(POST['path']);
 
-                    http_response_code('201');
-                } else {
+        if (FILES['filename']['size'] <= 2147483648 )
+        {
+            $uploadFile =  $fullLenPath . Validate::checkFileName(basename(FILES['filename']['name']));
 
-                    http_response_code('204');
-                }
+            if (move_uploaded_file(FILES['filename']['tmp_name'], $uploadFile))
+            {
+
+                http_response_code('201');
 
             }else{
-                http_response_code('400');
+
+                http_response_code('204');
             }
+
         }else{
-            http_response_code('404');
+
+            http_response_code('400');
+
         }
 
     }
 
     /**
-
-     */
+    * @return void
+    */
     public function fileDelete():void
     {
-        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . DELETE['path'];
-        $deletedFile =  $fullLenPath.DELETE['filename'];
+
+        $fullLenPath = Validate::isDirectory(DELETE['path']);
+        $deletedFile =  $fullLenPath.Validate::checkFileName(DELETE['filename']);
+
         if(file_exists($deletedFile) && unlink($deletedFile))
         {
+
             http_response_code('204');
+
         }else{
+
             http_response_code('400');
+
         }
     }
 
     /**
-
+     * @return void
      */
-
     public function fileRename()
     {
-        $fullLenPath = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . PUT['path'];
+        $fullLenPath = Validate::isDirectory(PUT['path']);
 
-        if(opendir($fullLenPath) && is_file($fullLenPath . PUT['oldfilename']))
+        if(opendir($fullLenPath))
         {
-            rename($fullLenPath . PUT['oldfilename'], $fullLenPath . PUT['newfilename']);
+
+            rename($fullLenPath . Validate::checkFileName(PUT['oldfilename']), $fullLenPath . Validate::checkFileName(PUT['newfilename']));
             http_response_code('201');
+
         }else{
+
             http_response_code('404');
+
         }
     }
+
 }
