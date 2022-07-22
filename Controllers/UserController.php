@@ -304,7 +304,7 @@ class UserController extends exception
 
     }
 
-    public function findUserByEmail():string
+    public function findUserByEmail()
     {
         if(defined('GET')) {
             $email = Validate::validateEmail(GET['email']);
@@ -317,12 +317,16 @@ class UserController extends exception
             if ($stmt->rowCount() > 0) {
                 while ($row = $stmt->fetch(PDO::FETCH_LAZY))
                 {
-                    $email = $row->user_email;
+                    $email1 = $row->user_email;
                 }
+
+            }else{
+                http_response_code('404');
+                die();
             }
-            return $email;
+            return $email1;
         }else{
-            http_response_code('404');
+            http_response_code('400');
             die();
         }
     }

@@ -116,5 +116,18 @@ class FileController
 
         }
     }
+    public function addFileAccessToSharedFile()
+    {
+        $fileShared = PUT['file'];
+
+    }
+    public function fileSharedListUsers()
+    {
+
+    }
+    public function deleteAccessToSharedFile()
+    {
+
+    }
 
 }

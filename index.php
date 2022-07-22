@@ -77,6 +77,11 @@ set_error_handler("myErrorHandler");
             'DELETE'=>'FileController::fileDelete',
             'PUT'=>'FileController::fileRename',
         ],
+        '/files/share/'=>[
+            'GET'=>'FileController::fileSharedListUsers',
+            'DELETE'=>'FileController::deleteAccessToSharedFile',
+            'PUT'=>'FileController::addFileAccessToSharedFile',
+        ],
         '/directory/'=>[
             'GET'=>'DirectoryController::getInformationDirectory',
             'POST'=>'DirectoryController::addDirectory',
