@@ -94,10 +94,19 @@ set_error_handler("myErrorHandler");
     function start_controller($urlList)
     {
         require_once 'autoload.php';
+
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); // /admin/user/
+
+        if (!array_key_exists($path, $urlList)) {
+            http_response_code('400');
+            die();
+        }
+
         $method = parse_url($_SERVER['REQUEST_METHOD']); //GET
         $id = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY); // id=6
         $res = $urlList[$path];
+
+
         /**
          * $controller - string название Класса
          */
@@ -126,24 +135,28 @@ set_error_handler("myErrorHandler");
          * Если существуют GET POST и тд
          * занесем их данные в константы для дальнейшего использования в методах класса
          */
-        if(count($_POST) !== 0){
+
+        if(count($_POST) > 0){
+
             define("POST", $_POST);
-            var_dump(POST);
-        }elseif (count($_GET) !== 0){
+
+        }elseif(count($_GET) > 0){
+
             define("GET", $_GET);
-            print_r(GET);
-        }elseif(strlen(file_get_contents('php://input'))>0 && parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'PUT'){
-            parse_str(file_get_contents('php://input'), $_PUT);
-            define("PUT", $_PUT);
-            print_r(PUT);
-            var_dump(parse_url($_SERVER['REQUEST_METHOD'])['path']);
-        }elseif(strlen(file_get_contents('php://input'))>0 && parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'DELETE'){
+
+        }elseif(parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'PUT'){
+
+            define('PUT', json_decode(file_get_contents('php://input'),true));
+
+        }elseif(parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'DELETE'){
+
             parse_str(file_get_contents('php://input'), $_DELETE);
             define("DELETE", $_DELETE);
-            print_r(DELETE);
-            var_dump(parse_url($_SERVER['REQUEST_METHOD'])['path']);
+
         }else{
+
             http_response_code('404');
+
         }
 
         if (count($_FILES) !== 0){
@@ -156,5 +169,6 @@ set_error_handler("myErrorHandler");
 
         print_r(json_decode(json_encode($controller->$method(),true)));
     }
+
 
     start_controller($urlList);

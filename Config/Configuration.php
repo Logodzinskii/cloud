@@ -19,17 +19,17 @@ class Configuration
         $mail = new PHPMailer\PHPMailer\PHPMailer(true);
         $mail->isSMTP();
         //$mail->SMTPDebug = 1;
-        $mail->Host = '';
+        $mail->Host = 'ssl://smtp.mail.ru';
         $mail->SMTPAuth = true;                                          //Send using SMTP
         //Enable SMTP authentication
-        $mail->Username = '';                     //SMTP username
-        $mail->Password = '';                    //SMTP password
-        $mail->SMTPSecure = '';
-        $mail->Port = '';
+        $mail->Username = 'chelae1@mail.ru';                     //SMTP username
+        $mail->Password = 'GspLPbApTXMBxqrQeybm';                    //SMTP password
+        $mail->SMTPSecure = 'SSL';
+        $mail->Port = '465';
 
         $mail->CharSet = 'UTF-8';
-        $mail->From = '';  // адрес почты, с которой идет отправка
-        $mail->FromName = ''; // имя отправителя
+        $mail->From = 'chelae1@mail.ru';  // адрес почты, с которой идет отправка
+        $mail->FromName = 'Александр'; // имя отправителя
 
         $this->phpMail = $mail;
 

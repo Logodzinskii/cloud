@@ -118,16 +118,61 @@ class FileController
     }
     public function addFileAccessToSharedFile()
     {
-        $fileShared = PUT['file'];
+        if(defined('PUT'))
+        {
+
+            $query = "INSERT INTO `sharedfiles` SET `file_id` =:file_id, `user_id` =:user_id, `count` =:count";
+            $sth = $this->conn->prepare($query);
+            $sth->execute([
+                'file_id'=>Validate::validateId(PUT['file_id']),
+                'user_id'=>Validate::validateId(PUT['user_id']),
+                'count'=>0
+            ]);
+
+                http_response_code('201');
+
+        }else{
+            http_response_code('400');
+        }
 
     }
     public function fileSharedListUsers()
     {
-
+        if(defined('GET'))
+        {
+            $query = "SELECT `user_id` FROM sharedfiles WHERE file_id =:file_id";
+            $param = [
+                'file_id' => Validate::validateId(GET['file_id']),
+            ];
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute($param);
+            if($stmt->rowCount() > 0){
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                return $row;
+                http_response_code('200');
+            }else{
+                http_response_code('404');
+            }
+        }
     }
     public function deleteAccessToSharedFile()
     {
+        if(defined('DELETE'))
+        {
+            $query = "DELETE FROM sharedfiles WHERE user_id =:user_id AND file_id =:file_id";
+            $param = [
+                'file_id' => Validate::validateId(DELETE['file_id']),
+                'user_id' => Validate::validateId(DELETE['user_id']),
+            ];
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute($param);
+            if( ! $stmt->rowCount() ){
+                http_response_code('401');
+            }else{
 
+                http_response_code('204');
+            }
+        }
     }
 
 }
