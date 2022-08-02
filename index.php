@@ -2,7 +2,7 @@
     // необходимые HTTP-заголовки
     header("Access-Control-Allow-Origin: *");
     header("Content-Type: application/json; charset=UTF-8");
-
+    file_put_contents('log.txt', $_SERVER['REQUEST_URI']);
 function myErrorHandler($errno, $errstr, $errfile, $errline)
 {
 
@@ -99,7 +99,8 @@ set_error_handler("myErrorHandler");
 
         if (!array_key_exists($path, $urlList)) {
             http_response_code('400');
-            die();
+            throw new Exception('Такого метода ' . $path . ' не существует');
+
         }
 
         $method = parse_url($_SERVER['REQUEST_METHOD']); //GET
@@ -140,15 +141,30 @@ set_error_handler("myErrorHandler");
 
             define("POST", $_POST);
 
-        }elseif(count($_GET) > 0){
+        }else{
+
+            http_response_code('404');
+
+        }
+        if(count($_GET) > 0){
 
             define("GET", $_GET);
 
-        }elseif(parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'PUT'){
+        }else{
+
+            http_response_code('404');
+
+        }
+        if(parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'PUT'){
 
             define('PUT', json_decode(file_get_contents('php://input'),true));
 
-        }elseif(parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'DELETE'){
+        }else{
+
+            http_response_code('404');
+
+        }
+        if(parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'DELETE'){
 
             parse_str(file_get_contents('php://input'), $_DELETE);
             define("DELETE", $_DELETE);
@@ -170,5 +186,8 @@ set_error_handler("myErrorHandler");
         print_r(json_decode(json_encode($controller->$method(),true)));
     }
 
-
+try{
     start_controller($urlList);
+}catch (Exception $e){
+        file_put_contents('log_exept.txt', $e->getMessage());
+}

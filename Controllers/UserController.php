@@ -21,7 +21,7 @@ class UserController extends exception
     public function listUsers():string
     {
 
-        if(!defined('GET')){
+        if(defined('GET') && !isset(GET['id'])){
 
             $query = 'SELECT * FROM users';
             $stmt = $this->connection->prepare($query);
@@ -45,7 +45,7 @@ class UserController extends exception
 
             return json_encode($res);
 
-        }elseif(strlen(GET['id']) > 0){
+        }elseif(defined('GET') && strlen(GET['id']) > 0){
 
             $param = [
                 'id'=> ''.GET['id'].''  ,
@@ -108,17 +108,16 @@ class UserController extends exception
                     'first_name' => $firstName,
                     'initial_path' => $initial_path,
                 ]);
-                try {
-                    if (!file_exists($_SERVER['DOCUMENT_ROOT'] . '/UsersClouds/' . $initial_path)) {
 
-                        mkdir($_SERVER['DOCUMENT_ROOT'] . '/UsersClouds/' . $initial_path, 0777, true);
+
+                    if(!mkdir($_SERVER['DOCUMENT_ROOT'] . '/cloud/UsersClouds/' . $initial_path, 0777, true))
+                    {
+
+                        file_put_contents('direrror.txt', 'error');
 
                     }
 
-                } catch (\Exception $e) {
-                    echo $e->getMessage();
-                    http_response_code('204');
-                }
+
                 http_response_code('201');
             }else{
                 http_response_code('400');
@@ -151,13 +150,14 @@ class UserController extends exception
 
                 $stmt = $this->connection->prepare($query);
                 $stmt->execute($params);
+                http_response_code('202');
 
             }catch (PDOException $e){
                 trigger_error($e->getMessage(), E_USER_WARNING);
             }
-            http_response_code('202');
+
         }else{
-            http_response_code('404');
+            http_response_code('400');
         }
 
     }

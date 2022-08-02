@@ -70,7 +70,7 @@ class Validate
             return $string;
         }else{
             http_response_code('400');
-            die();
+            throw new Exception('validateId - ' . $string);
         }
 
     }
@@ -82,7 +82,7 @@ class Validate
             return $password;
         }else{
             http_response_code('400');
-            die();
+            throw new Exception('validateId - ' . $password);
         }
     }
 
@@ -93,7 +93,7 @@ class Validate
            return $age;
         }else{
             http_response_code('400');
-            die();
+            throw new Exception('validateId - ' . $age);
         }
     }
 
@@ -104,7 +104,7 @@ class Validate
             return $text;
         }else{
             http_response_code('400');
-            die();
+            throw new Exception('validateId - ' . $text);
         }
     }
 
@@ -112,11 +112,13 @@ class Validate
     {
         if(preg_match('/^[0-9]*$/', intval($id)) === 1)
         {
-            return $id;
+           return $id;
 
         }else{
             http_response_code('400');
-            die();
+
+            throw new Exception('validateId - ' . $id);
+
         }
     }
 

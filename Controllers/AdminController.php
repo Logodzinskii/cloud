@@ -12,10 +12,10 @@ class AdminController extends UserController
      */
     public function __construct($db){
         $this->connection = $db;
-        if($_SESSION['role'] !== 'admin')
+        if(isset($_SESSION) && $_SESSION['role'] !== 'admin')
         {
             http_response_code('401');
-            die();
+            throw new Exception('session role not exist', 0);
         }
     }
 
@@ -26,12 +26,12 @@ class AdminController extends UserController
     public function showUsersByAdmin():string
     {
 
-        if(!defined('GET')) {
+        if(defined('GET') && !isset(GET['id'])) {
 
             $query = 'SELECT * FROM users';
             $stmt = $this->connection->prepare($query);
             $stmt->execute();
-        }elseif(defined('GET')){
+        }elseif(defined('GET') && strlen(GET['id']) > 0){
             $param = [
                 'id'=>Validate::validateId(GET['id']),
             ];
