@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1
--- Время создания: Июл 27 2022 г., 19:22
+-- Время создания: Авг 02 2022 г., 20:47
 -- Версия сервера: 10.4.20-MariaDB
 -- Версия PHP: 8.0.9
 
@@ -62,8 +62,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `user_email`, `user_password`, `users_status`, `age`, `first_name`, `initial_path`) VALUES
-(2, 'ekasaitlim@gmail.com', '$2y$10$bymKNvyy6UguO8bK8Yp7IueK6IYK7sYfEBosw8O6Ez2TvobtEDfY.', 'user', 18, 'Aleksander', 'b9ca24eb5a424e34a7c8c6203cec0e42'),
-(3, 'chelae1@mail.ru', '$2y$10$bIA6cnIyjOOT.yEaRa23feMtt3E2ouQ9QNJZKGhuqok/GG2.UbQq6', 'admin', 18, 'Aleksander', '6fb8e91a04ca164f74b7a5754824157c');
+(24, 'chelae1@mail.ru', '$2y$10$OUh9EJPvu/JfzvIez1dJrei3FNtpI20kMxGuFE2ky1ITMQncHXL86', 'admin', 18, 'Aleksander', 'ab20568ce97e06b9abcda5643d6389a9');
 
 --
 -- Индексы сохранённых таблиц
@@ -95,7 +94,7 @@ ALTER TABLE `sharedfiles`
 -- AUTO_INCREMENT для таблицы `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

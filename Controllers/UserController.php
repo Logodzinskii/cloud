@@ -16,7 +16,12 @@ class UserController extends exception
     }
 
     /**
-     * @return string
+     * Метод выдает результат в зависимости от запроса GET,
+     * если он содержит параметр id, то из базы данных выбирается
+     * значения соответствующие данному id.
+     * Если запрос не содержит id, то выбираются все значения
+     * @return string email, age, first_name, users_status
+     * @throws Exception
      */
     public function listUsers():string
     {
@@ -37,9 +42,9 @@ class UserController extends exception
                         'users_status'=>$row->users_status,
                     ];
                 }
-                http_response_code('200');
+                http_response_code(200);
             }else{
-                http_response_code('404');
+                http_response_code(404);
                 return false;
             }
 
@@ -64,23 +69,30 @@ class UserController extends exception
                         'users_status'=>$row->users_status,
                     ];
                 }
-                http_response_code('200');
+                http_response_code(200);
             }else{
-                http_response_code('404');
+                http_response_code(404);
                 return  false;
             }
 
             return json_encode($res);
         }
         else{
-            http_response_code('404');
-            return  false;
+            http_response_code(404);
+            throw new Exception('Неверный запрос GET listUsers', 0);
         }
 
     }
 
     /**
-    * @return void
+     * В теле запроса POST необходимо передать слудющие значения:
+     * email = string, (в виде example@mail.ru)
+     * password = string (количество символов не менее 6),
+     * age = int (0-99),
+     * first_name = string,
+     * status = admin / users
+     * @return void
+     * @throws Exception
      */
     public function addUser():void
     {
@@ -109,7 +121,6 @@ class UserController extends exception
                     'initial_path' => $initial_path,
                 ]);
 
-
                     if(!mkdir($_SERVER['DOCUMENT_ROOT'] . '/cloud/UsersClouds/' . $initial_path, 0777, true))
                     {
 
@@ -117,17 +128,24 @@ class UserController extends exception
 
                     }
 
-
-                http_response_code('201');
+                http_response_code(201);
             }else{
-                http_response_code('400');
+                http_response_code(400);
             }
+        }else{
+            throw new Exception('Неверный запрос POST addUser', 0);
         }
 
     }
 
     /**
-    * @return void
+     * В теле запроса PUT необходимо передать следующие значения:
+     * id = int,
+     * age = int (0-99),
+     * first_name = string,
+     * status = string (admin/users),
+     * @return void
+     * @throws Exception
      */
     public function updateUser():void
     {
@@ -150,20 +168,24 @@ class UserController extends exception
 
                 $stmt = $this->connection->prepare($query);
                 $stmt->execute($params);
-                http_response_code('202');
+                http_response_code(202);
 
             }catch (PDOException $e){
                 trigger_error($e->getMessage(), E_USER_WARNING);
             }
 
         }else{
-            http_response_code('400');
+            http_response_code(400);
+            throw new Exception('Неверный запрос PUT updateUser', 0);
         }
 
     }
 
     /**
-
+     * В запросе DELETE необходимо передать следующие значения:
+     * id = int,
+     * @return void
+     * @throws Exception
      */
     public function deleteUser():void
     {
@@ -192,24 +214,28 @@ class UserController extends exception
                 $stmt = $this->connection->prepare($query);
                 $stmt->execute($param);
                 if( ! $stmt->rowCount() ){
-                    http_response_code('401');
+                    http_response_code(401);
                 }else{
 
-                    http_response_code('204');
+                    http_response_code(204);
                 }
             }else{
-                http_response_code('404');
-                die();
+                http_response_code(404);
+                throw new Exception('Неверный запрос DELETE deleteUser', 0);
             }
 
         }else{
-            http_response_code('400');
+            http_response_code(400);
         }
 
     }
 
     /**
-     *@return void
+     * В запросе GET необходимо передать следующие значения:
+     * email = string, (в виде example@mail.ru)
+     * password = string (количество символов не менее 6),
+     * @return void
+     * @throws Exception
      */
 
     public function loginUser():void
@@ -239,24 +265,27 @@ class UserController extends exception
                         $_SESSION['role'] = $row->users_status;
                         $_SESSION['initialPath'] = $row->initial_path;
 
-                        http_response_code('200');
+                        http_response_code(200);
 
                     }else{
 
-                        http_response_code('401');
+                        http_response_code(401);
 
                     }
                 }
             }else{
-                http_response_code('401');
+                http_response_code(401);
             }
 
+        }else{
+            throw new Exception('Неверный запрос GET loginUser', 0);
         }
 
     }
 
     /**
      ** удалим сессии при выходе пользователя
+     * @return void
      */
     public function logoutUser():void
     {
@@ -264,10 +293,12 @@ class UserController extends exception
         setcookie("sessionId", '',time()-86400,'/');
         $_SESSION['role'] = '';
         $_SESSION['initialPath'] = '';
-        http_response_code('204');
+        http_response_code(204);
     }
 
     /**
+     * * В запросе GET необходимо передать следующие значения:
+     * email = string, (в виде example@mail.ru)
      * @throws Exception
      */
     public function resetPasswordUser():void
@@ -295,16 +326,24 @@ class UserController extends exception
                 $mail->AltBody = "Имя: {$author}\r\n Email: {$email}\r\n Сообщение: {$text}";
                 $mail->send();
 
-                http_response_code('200');
+                http_response_code(200);
             }else{
-                http_response_code('401');
-                die();
+                http_response_code(401);
+
             }
+        }else{
+            throw new Exception('Неверный запрос GET resetPasswordUser', 0);
         }
 
     }
+    /**
+     * В запросе GET необходимо передать следующие значения:
+     * email = string, (в виде example@mail.ru)
+     * @return void
+     * @throws \Exception
+     */
 
-    public function findUserByEmail()
+    public function findUserByEmail():void
     {
         if(defined('GET')) {
             $email = Validate::validateEmail(GET['email']);
@@ -317,17 +356,19 @@ class UserController extends exception
             if ($stmt->rowCount() > 0) {
                 while ($row = $stmt->fetch(PDO::FETCH_LAZY))
                 {
-                    $email1 = $row->user_email;
+                    $foundEmail = $row->user_email;
                 }
 
             }else{
-                http_response_code('404');
-                die();
+                http_response_code(404);
+                throw new Exception('Пользователь' . $email . ' не найден.', 0);
+
             }
-            return $email1;
+            http_response_code(200);
+
         }else{
-            http_response_code('400');
-            die();
+            http_response_code(400);
+            throw new Exception('Неверный запрос GET findUserByEmail', 0);
         }
     }
 

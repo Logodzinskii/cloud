@@ -8,20 +8,31 @@ class AdminController extends UserController
     private $role;
 
     /**
+     * При создании класса производится проверка на предмет
+     * наличия регистрации пользователя с ролью admin.
+     * Если SESSION['role'] = admin, то пользователь является
+     * администратором и ему доступны методы class AdminController,
+     * Если SESSION['role'] не существует или != admin, то возвращается код 401
+     * и исключение.
      * @param $db
+     * @throws Exception
      */
     public function __construct($db){
         $this->connection = $db;
         if(isset($_SESSION) && $_SESSION['role'] !== 'admin')
         {
-            http_response_code('401');
-            throw new Exception('session role not exist', 0);
+            http_response_code(401);
+            throw new Exception('session role не существует (необходима авторизация как администратор)');
         }
     }
 
     /**
-
+     * Метод выдает результат в зависимости от запроса GET,
+     * если он содержит параметр id, то из базы данных выбирается
+     * значения соответствующие данному id.
+     * Если запрос не содержит id, то выбираются все значения
      * @return string
+     * @throws Exception
      */
     public function showUsersByAdmin():string
     {
@@ -40,8 +51,8 @@ class AdminController extends UserController
             $stmt->execute($param);
 
         }else{
-            http_response_code('400');
-            die();
+            http_response_code(400);
+            throw new Exception('Некорректный запрос GET showUsersByAdmin');
         }
         if($stmt->rowCount() > 0)
         {
@@ -54,16 +65,19 @@ class AdminController extends UserController
                     'users_status'=>$row->users_status,
                 ];
             }
-            http_response_code('200');
+            http_response_code(200);
         }else{
-            http_response_code('404');
-            die();
+            http_response_code(404);
+            throw new Exception('Некорректный запрос GET');
         }
         return json_encode($res);
     }
 
     /**
-    * @return void
+     * В запросе DELETE необходимо передать следующие значения:
+     * id = int,
+     * @return void
+     * @throws Exception
      */
     public function delUserByAdmin():void
     {
@@ -87,24 +101,30 @@ class AdminController extends UserController
                 $stmt = $this->connection->prepare($query);
                 $stmt->execute($param);
                 if(!$stmt->rowCount()){
-                    http_response_code('401');
+                    http_response_code(401);
                 }else{
-                    http_response_code('204');
+                    http_response_code(204);
                 }
             }else{
-                http_response_code('404');
-                die();
+                http_response_code(404);
+                throw new Exception('Некорректный запрос DELETE delUserByAdmin');
             }
 
 
         }else{
-            http_response_code('400');
+            http_response_code(400);
         }
 
     }
 
      /**
-     *@return void
+      * В теле запроса PUT необходимо передать следующие значения:
+      * id = int,
+      * age = int (0-99),
+      * first_name = string,
+      * status = string (admin/users),
+      * @return void
+      * @throws
      */
     public function updateUserByAdmin():void
     {
@@ -131,10 +151,11 @@ class AdminController extends UserController
             } catch (PDOException $e) {
                 trigger_error($e->getMessage(), E_USER_WARNING);
             }
-            http_response_code('202');
+            http_response_code(202);
 
         }else{
-            http_response_code('404');
+            http_response_code(404);
+            throw new Exception('Некорректный запрос PUT updateUserByAdmin');
         }
     }
 

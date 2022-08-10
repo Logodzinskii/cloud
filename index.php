@@ -2,7 +2,7 @@
     // необходимые HTTP-заголовки
     header("Access-Control-Allow-Origin: *");
     header("Content-Type: application/json; charset=UTF-8");
-    file_put_contents('log.txt', $_SERVER['REQUEST_URI']);
+
 function myErrorHandler($errno, $errstr, $errfile, $errline)
 {
 
@@ -17,27 +17,20 @@ function myErrorHandler($errno, $errstr, $errfile, $errline)
 
     switch ($errno) {
         case E_USER_ERROR:
-            http_response_code('404' . $errstr);
 
+            file_put_contents('EuserError.log', $errstr . ' Файл - ' . $errfile . ' Строка - ' . $errline . ' Код ошибки- ' . $errno);
+            die();
 
         case E_USER_WARNING:
-            //echo "<div class='reportMessage1' style='display: block; width: 30vw; height: auto; border: solid 1px pink; background: pink; color: black;'>";
-
-           http_response_code('404' . $errstr);
-            //echo "</b></div>";
-            //echo "<b>Пользовательское ПРЕДУПРЕЖДЕНИЕ</b> [$errno] $errstr<br />\n";
+            file_put_contents('EuserError.log', $errstr . ' Файл - ' . $errfile . ' Строка - ' . $errline . ' Код ошибки - ' . $errno);
             break;
 
         case E_USER_NOTICE:
-            //echo "<div class='reportMessage1' style='display: block; width: 30vw; height: auto; border: solid 1px pink; background: lightgreen; color: black;'>";
-            http_response_code('404' . $errstr);
-            //echo "</b></div>";
+            file_put_contents('EuserError.log', $errstr . ' Файл - ' . $errfile . ' Строка - ' . $errline . ' Код ошибки - ' . $errno);
             break;
 
         default:
-            //echo "<div class='reportMessage1' style='display: block; width: 30vw; height: auto; border: solid 1px pink; background: pink; color: black;'>";
-            http_response_code('404' . $errstr);
-            //echo "</b></div>";
+            file_put_contents('EuserError.log', $errstr . ' Файл - ' . $errfile . ' Строка - ' . $errline . ' Код ошибки - ' . $errno);
             break;
     }
 
@@ -177,7 +170,7 @@ set_error_handler("myErrorHandler");
 
         if (count($_FILES) !== 0){
         define("FILES", $_FILES);
-            print_r(FILES);
+
         }
         /**
          * Вызовем метод для класса
@@ -189,5 +182,5 @@ set_error_handler("myErrorHandler");
 try{
     start_controller($urlList);
 }catch (Exception $e){
-        file_put_contents('log_exept.txt', $e->getMessage());
+        file_put_contents('log_exept.txt', $e->getMessage(). $e->getCode(). $e->getFile(). $e->getLine());
 }
