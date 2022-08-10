@@ -91,7 +91,7 @@ set_error_handler("myErrorHandler");
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); // /admin/user/
 
         if (!array_key_exists($path, $urlList)) {
-            http_response_code(400);
+            http_response_code('400');
             throw new Exception('Такого метода ' . $path . ' не существует');
 
         }
@@ -136,7 +136,7 @@ set_error_handler("myErrorHandler");
 
         }else{
 
-            http_response_code(404);
+            http_response_code('404');
 
         }
         if(count($_GET) > 0){
@@ -145,7 +145,7 @@ set_error_handler("myErrorHandler");
 
         }else{
 
-            http_response_code(404);
+            http_response_code('404');
 
         }
         if(parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'PUT'){
@@ -154,7 +154,7 @@ set_error_handler("myErrorHandler");
 
         }else{
 
-            http_response_code(404);
+            http_response_code('404');
 
         }
         if(parse_url($_SERVER['REQUEST_METHOD'])['path'] === 'DELETE'){
@@ -164,7 +164,7 @@ set_error_handler("myErrorHandler");
 
         }else{
 
-            http_response_code(404);
+            http_response_code('404');
 
         }
 

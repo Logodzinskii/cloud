@@ -3,9 +3,6 @@
 class DirectoryController
 {
     /**
-     * В SESSION['initialPath'] храниться информация о пути к корневой папке пользователя
-     * Если сессия существует и имеется папка по указанному пути, то создается объект класса
-     * если нет, то возвращается 401 и записывается сообщение в лог файл
      * @var
      */
     protected $conn;
@@ -13,7 +10,6 @@ class DirectoryController
 
     /**
      * @param $db
-     * @throws Exception
      */
     public function __construct($db)
     {
@@ -21,18 +17,15 @@ class DirectoryController
         if(strlen($_SESSION['initialPath']) > 0){
             $this->initialPath = $_SESSION['initialPath'];
         }else{
-            http_response_code(401);
-            throw new Exception('initialPath не найдена или не существует');
+            http_response_code('401');
+            die();
         }
 
     }
 
     /**
-     * В теле запроса POST необходимо передать следующие значения:
-     * path = string,
      * POST['path'] не должен содержать символы \|/:?"<>
      * @return void
-     * @throws
      */
     public function addDirectory():void
     {
@@ -42,25 +35,21 @@ class DirectoryController
             if (!mkdir($fullLenPath .'/'. Validate::checkDirName(POST['path']), 0777, true))
             {
 
-                http_response_code(400);
+                http_response_code('400');
 
             }else{
 
-                http_response_code(201);
+                http_response_code('201');
 
             }
         }else{
-            http_response_code(400);
-            throw new Exception('addDirectory некорректный запрос');
+            http_response_code('400');
         }
 
     }
 
     /**
-     * В теле запросе DELETE необходимо передать следующие значения:
-     * path = string,
      * @return void
-     * @throws Exception
      */
     public function deleteDirectory():void
     {
@@ -68,19 +57,16 @@ class DirectoryController
         $dir = Validate::isDirectory(Validate::checkDirName(DELETE['path']));
 
         Validate::remove_dir($dir);
-        http_response_code(204);
+        http_response_code('204');
 
     }
 
      /**
-      * В теле запросе GET необходимо передать следующие значения:
-      * path = string
-      * @return string
-      * @throws Exception
+     * @return string
      */
     public function getInformationDirectory():string
     {
-        if(defined('GET') && strlen(GET['path']) > 0){
+        if(defined('GET')){
             $dir = Validate::isDirectory(Validate::checkDirName(GET['path']));
         }else{
             $dir = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath;
@@ -103,43 +89,33 @@ class DirectoryController
             }
         }
 
-       http_response_code(200);
+       http_response_code('200');
        return json_encode($result);
 
     }
 
     /**
-     * В запросе PUT необходимо передать следующие параметры
-     * oldDirName = string
-     * newDirName = string
      * @return void
-     * @throws Exception
      */
     public function renameDirectory():void
     {
-        if(isset(PUT['oldDirName']) && isset(PUT['newDirName'])){
-            $oldDirectoryName = Validate::checkDirName(PUT['oldDirName']);
-            $newDirectoryName = Validate::checkDirName(PUT['newDirName']);
+        $oldDirectoryName = Validate::checkDirName(PUT['oldDirName']);
+        $newDirectoryName = Validate::checkDirName(PUT['newDirName']);
 
-            $dir = Validate::isDirectory($oldDirectoryName);
-            $newDir = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . '/' . $newDirectoryName;
-            if(is_dir($dir) && !is_dir($newDir))
+        $dir = Validate::isDirectory($oldDirectoryName);
+        $newDir = $_SERVER['DOCUMENT_ROOT'].'/UsersClouds/' . $this->initialPath . '/' . $newDirectoryName;
+        if(is_dir($dir) && !is_dir($newDir))
+        {
+            if(rename($dir, $newDir))
             {
-                if(rename($dir, $newDir))
-                {
-                    http_response_code(201);
+                http_response_code('201');
 
-                }else{
+            }else{
 
-                    http_response_code(404);
+                http_response_code('404');
 
-                }
             }
-        }else{
-            http_response_code(400);
-            throw new Exception('renameDirectory некорректный запрос');
         }
-
     }
 
 }
