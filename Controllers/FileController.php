@@ -129,22 +129,31 @@ class FileController
      * oldfilename = string,
      * newfilename = string,
      * @return void
+     * @throws
      */
     public function fileRename()
     {
-        $fullLenPath = Validate::isDirectory(PUT['path']);
-
-        if(opendir($fullLenPath))
+        if (defined('PUT') && strlen(PUT['path']) > 0 && strlen(PUT['oldfilename']) > 0 && strlen(PUT['newfilename']) > 0)
         {
+            $fullLenPath = Validate::isDirectory(PUT['path']);
 
-            rename($fullLenPath . Validate::checkFileName(PUT['oldfilename']), $fullLenPath . Validate::checkFileName(PUT['newfilename']));
-            http_response_code(201);
+            if(opendir($fullLenPath))
+            {
 
-        }else{
+                rename($fullLenPath . Validate::checkFileName(PUT['oldfilename']), $fullLenPath . Validate::checkFileName(PUT['newfilename']));
+                http_response_code(201);
 
-            http_response_code(404);
+            }else{
 
+                http_response_code(404);
+
+            }
+        }else
+        {
+            http_response_code(400);
+            throw new Exception('Некорректный запрос fileRename', 0);
         }
+
     }
 
     /**
@@ -179,9 +188,9 @@ class FileController
      * В запросе GET необходимо передать следующие параметры:
      * file_id = int
      * @throws Exception
-     * @return string
+     * @return array
      */
-    public function fileSharedListUsers():string
+    public function fileSharedListUsers():array
     {
         if(defined('GET'))
         {
